@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生日留言板管理后台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #0a0a0a 25%, #111111 50%, #1a1a1a 75%, #222222 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 0 10px;
+            }
+            
+            .header {
+                margin-bottom: 20px;
+                padding: 20px 15px;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+                margin-bottom: 10px;
+            }
+            
+            .header p {
+                font-size: 14px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 30px;
+            }
+            
+            .stat-card {
+                padding: 16px 12px;
+            }
+            
+            .stat-number {
+                font-size: 24px;
+            }
+            
+            .stat-label {
+                font-size: 12px;
+            }
+            
+            .section {
+                padding: 16px;
+                margin-bottom: 20px;
+            }
+            
+            .section-title {
+                font-size: 18px;
+                margin-bottom: 15px;
+            }
+            
+            .admin-controls {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+                padding: 15px;
+            }
+            
+            .bulk-actions {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .refresh-btn {
+                padding: 10px 20px;
+                font-size: 13px;
+            }
+            
+            .select-all-btn,
+            .delete-selected-btn {
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 8s ease-in-out infinite;
+            margin-bottom: 15px;
+        }
+
+        .header p {
+            color: #cccccc;
+            font-size: 18px;
+            opacity: 0.8;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 24px 16px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #feca57);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1, #feca57);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 6s ease-in-out infinite;
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            color: #cccccc;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(20px);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #ffd700, #ffb347, #ff69b4, #87ceeb, #98fb98);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 10s ease-in-out infinite;
+        }
+
+        .message-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        @media (max-width: 768px) {
+            .message-item {
+                padding: 15px;
+                margin-bottom: 12px;
+                border-radius: 12px;
+            }
+            
+            .message-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .message-info {
+                width: 100%;
+            }
+            
+            .message-actions {
+                align-self: flex-end;
+            }
+            
+            .message-emoji {
+                font-size: 20px;
+                padding: 6px;
+            }
+            
+            .message-name {
+                font-size: 13px;
+            }
+            
+            .message-time {
+                font-size: 11px;
+            }
+            
+            .message-content {
+                font-size: 14px;
+                padding: 10px 12px;
+            }
+            
+            .delete-btn {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+        }
+
+        .message-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .message-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .message-emoji {
+            font-size: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 10px;
+        }
+
+        .message-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .message-name {
+            color: #4ecdc4;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .message-time {
+            color: #888888;
+            font-size: 12px;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .delete-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ff5252);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.7;
+        }
+
+        .delete-btn:hover {
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .message-content {
+            color: #ffffff;
+            line-height: 1.6;
+            font-size: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px 16px;
+            border-radius: 10px;
+            border-left: 3px solid #4ecdc4;
+        }
+
+        .admin-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #007AFF, #5856D6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 122, 255, 0.3);
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .select-all-btn {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .delete-selected-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ff5252);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.6;
+        }
+
+        .delete-selected-btn:not(:disabled):hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .message-checkbox {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+
+        .loading {
+            text-align: center;
+            color: #cccccc;
+            padding: 20px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .visitor-log {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .visitor-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .visitor-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 10px 12px;
+                gap: 8px;
+            }
+            
+            .visitor-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+                width: 100%;
+            }
+            
+            .visitor-ip {
+                font-size: 12px;
+                padding: 3px 6px;
+            }
+            
+            .visitor-agent {
+                font-size: 11px;
+                padding: 2px 4px;
+            }
+            
+            .visitor-time {
+                font-size: 11px;
+                align-self: flex-end;
+            }
+        }
+
+        .visitor-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateX(3px);
+        }
+
+        .visitor-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .visitor-ip {
+            color: #4ecdc4;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            background: rgba(78, 205, 196, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .visitor-agent {
+            color: #feca57;
+            font-size: 12px;
+            background: rgba(254, 202, 87, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .visitor-time {
+            color: #888888;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        /* 红包管理样式 */
+        .red-packet-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .red-packet-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 12px;
+                gap: 10px;
+            }
+            
+            .red-packet-info {
+                width: 100%;
+            }
+            
+            .red-packet-details {
+                gap: 6px;
+            }
+            
+            .red-packet-code {
+                font-size: 14px;
+                padding: 3px 6px;
+            }
+            
+            .red-packet-meta {
+                font-size: 11px;
+            }
+            
+            .red-packet-actions {
+                align-self: flex-end;
+            }
+        }
+
+        .red-packet-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(3px);
+        }
+
+        .red-packet-item.used {
+            opacity: 0.6;
+            background: rgba(255, 107, 107, 0.1);
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+
+        .red-packet-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .red-packet-status {
+            font-size: 20px;
+        }
+
+        .red-packet-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .red-packet-code {
+            color: #4ecdc4;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            font-size: 16px;
+            background: rgba(78, 205, 196, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .red-packet-meta {
+            color: #888888;
+            font-size: 12px;
+        }
+
+        .red-packet-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 添加红包弹窗 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transform: scale(0.8) translateY(50px);
+            transition: all 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                border-radius: 16px;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            
+            .modal-title {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+            
+            .form-group {
+                margin-bottom: 15px;
+            }
+            
+            .form-label {
+                font-size: 13px;
+                margin-bottom: 6px;
+            }
+            
+            .form-input {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+            
+            .form-textarea {
+                min-height: 60px;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+                gap: 8px;
+                margin-top: 20px;
+            }
+            
+            .modal-btn {
+                padding: 12px 20px;
+                font-size: 14px;
+                width: 100%;
+            }
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-title {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            color: #cccccc;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+
+        .modal-btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #cccccc;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>生日留言板管理后台</h1>
+            <p>数据统计与内容管理</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalMessages">0</div>
+                <div class="stat-label">总留言数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalVisitors">0</div>
+                <div class="stat-label">总访问数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="todayMessages">0</div>
+                <div class="stat-label">今日留言</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="todayVisitors">0</div>
+                <div class="stat-label">今日访问</div>
+            </div>
+        </div>
+
+        <!-- 安全统计 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="activeBans">0</div>
+                <div class="stat-label">当前封禁IP</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="todayBans">0</div>
+                <div class="stat-label">今日封禁</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="todayRequests">0</div>
+                <div class="stat-label">今日请求</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="todayBlocked">0</div>
+                <div class="stat-label">今日拦截</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">最新留言</div>
+            <div class="admin-controls">
+                <button class="refresh-btn" onclick="loadData()">
+                    🔄 刷新数据
+                </button>
+                <div class="bulk-actions">
+                    <button class="select-all-btn" onclick="toggleSelectAll()">
+                        ☑️ 全选
+                    </button>
+                    <button class="delete-selected-btn" id="deleteSelectedBtn" onclick="deleteSelected()" disabled>
+                        🗑️ 删除选中
+                    </button>
+                </div>
+            </div>
+            <div id="messagesContainer" class="loading">
+                正在加载留言数据...
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">红包口令管理</div>
+            <div class="admin-controls">
+                <button class="refresh-btn" onclick="loadRedPackets()">
+                    🔄 刷新红包
+                </button>
+                <button class="select-all-btn" onclick="showAddRedPacketModal()">
+                    ➕ 添加口令
+                </button>
+            </div>
+            <div id="redPacketsContainer" class="loading">
+                正在加载红包数据...
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">安全管理</div>
+            <div class="admin-controls">
+                <button class="refresh-btn" onclick="loadSecurityData()">
+                    🛡️ 刷新安全数据
+                </button>
+                <button class="select-all-btn" onclick="showBanIpModal()">
+                    🚫 手动封禁IP
+                </button>
+            </div>
+            
+            <!-- 封禁IP列表 -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #ff6b6b; margin-bottom: 15px; font-size: 16px;">🚫 被封禁的IP地址</h3>
+                <div id="bannedIpsContainer" class="loading">
+                    正在加载封禁IP数据...
+                </div>
+            </div>
+            
+            <!-- 请求日志 -->
+            <div>
+                <h3 style="color: #4ecdc4; margin-bottom: 15px; font-size: 16px;">📊 请求日志</h3>
+                <div id="requestLogsContainer" class="loading">
+                    正在加载请求日志...
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">访问记录</div>
+            <div id="visitorsContainer" class="visitor-log loading">
+                正在加载访问数据...
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加红包口令弹窗 -->
+    <div class="modal" id="addRedPacketModal">
+        <div class="modal-content">
+            <h2 class="modal-title">添加红包口令</h2>
+            <form id="addRedPacketForm">
+                <div class="form-group">
+                    <label class="form-label">支付宝口令 *</label>
+                    <input type="text" class="form-input" id="redPacketCode" placeholder="请输入支付宝红包口令" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">红包描述</label>
+                    <textarea class="form-input form-textarea" id="redPacketDescription" placeholder="红包描述（可选）"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">红包金额</label>
+                    <input type="number" class="form-input" id="redPacketAmount" placeholder="红包金额（可选）" step="0.01" min="0">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddRedPacketModal()">取消</button>
+                    <button type="submit" class="modal-btn modal-btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 手动封禁IP弹窗 -->
+    <div class="modal" id="banIpModal">
+        <div class="modal-content">
+            <h2 class="modal-title">手动封禁IP</h2>
+            <form id="banIpForm">
+                <div class="form-group">
+                    <label class="form-label">IP地址 *</label>
+                    <input type="text" class="form-input" id="banIpAddress" placeholder="请输入要封禁的IP地址" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">封禁原因</label>
+                    <input type="text" class="form-input" id="banReason" placeholder="封禁原因（可选）" value="手动封禁">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">封禁时长（秒）</label>
+                    <input type="number" class="form-input" id="banDuration" placeholder="封禁时长" value="3600" min="60">
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px; color: #cccccc; font-size: 14px;">
+                        <input type="checkbox" id="isPermanent" style="transform: scale(1.2);">
+                        永久封禁
+                    </label>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeBanIpModal()">取消</button>
+                    <button type="submit" class="modal-btn modal-btn-primary">封禁</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 加载数据
+        async function loadData() {
+            try {
+                // 显示加载状态
+                document.getElementById('messagesContainer').innerHTML = '<div class="loading">正在加载留言数据...</div>';
+                document.getElementById('visitorsContainer').innerHTML = '<div class="loading">正在加载访问数据...</div>';
+                
+                // 加载留言数据
+                const messagesResponse = await fetch('/api/messages');
+                if (!messagesResponse.ok) {
+                    throw new Error(`HTTP ${messagesResponse.status}: ${messagesResponse.statusText}`);
+                }
+                const messagesData = await messagesResponse.json();
+                
+                // 加载访问统计
+                const statsResponse = await fetch('/api/stats');
+                if (!statsResponse.ok) {
+                    throw new Error(`HTTP ${statsResponse.status}: ${statsResponse.statusText}`);
+                }
+                const statsData = await statsResponse.json();
+                
+                // 加载访问记录
+                const visitorsResponse = await fetch('/api/visitors');
+                if (!visitorsResponse.ok) {
+                    throw new Error(`HTTP ${visitorsResponse.status}: ${visitorsResponse.statusText}`);
+                }
+                const visitorsData = await visitorsResponse.json();
+                
+                // 更新统计数据
+                document.getElementById('totalMessages').textContent = statsData.totalMessages || 0;
+                document.getElementById('totalVisitors').textContent = statsData.totalVisitors || 0;
+                document.getElementById('todayMessages').textContent = statsData.todayMessages || 0;
+                document.getElementById('todayVisitors').textContent = statsData.todayVisitors || 0;
+                
+                // 存储留言数据到全局变量 - 修复数据结构
+                allMessages = Array.isArray(messagesData) ? messagesData : (messagesData.messages || []);
+                // 显示留言列表
+                displayMessages(allMessages);
+                
+                // 显示真实访问记录
+                displayVisitors(visitorsData.visitors || []);
+                
+                // 加载红包数据
+                loadRedPackets();
+                
+                // 加载安全数据
+                loadSecurityData();
+                
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                document.getElementById('messagesContainer').innerHTML = 
+                    `<div style="color: #ff6b6b; padding: 20px; text-align: center;">
+                        <div style="font-size: 18px; margin-bottom: 10px;">⚠️ 数据加载失败</div>
+                        <div style="font-size: 14px; opacity: 0.8;">错误信息: ${error.message}</div>
+                        <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">请检查服务器连接或刷新页面重试</div>
+                    </div>`;
+                document.getElementById('visitorsContainer').innerHTML = 
+                    '<div style="color: #ff6b6b;">访问数据加载失败</div>';
+                    
+                // 重置统计数据显示
+                document.getElementById('totalMessages').textContent = '?';
+                document.getElementById('totalVisitors').textContent = '?';
+                document.getElementById('todayMessages').textContent = '?';
+                document.getElementById('todayVisitors').textContent = '?';
+            }
+        }
+
+        // 加载红包数据
+        async function loadRedPackets() {
+            try {
+                document.getElementById('redPacketsContainer').innerHTML = '<div class="loading">正在加载红包数据...</div>';
+                
+                const response = await fetch('/api/red-packets');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const redPackets = await response.json();
+                displayRedPackets(Array.isArray(redPackets) ? redPackets : []);
+            } catch (error) {
+                console.error('加载红包数据失败:', error);
+                document.getElementById('redPacketsContainer').innerHTML = 
+                    `<div style="color: #ff6b6b; padding: 15px; text-align: center;">
+                        <div>⚠️ 红包数据加载失败</div>
+                        <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">${error.message}</div>
+                    </div>`;
+            }
+        }
+
+        // 显示红包列表
+        function displayRedPackets(redPackets) {
+            const container = document.getElementById('redPacketsContainer');
+            
+            if (!redPackets || redPackets.length === 0) {
+                container.innerHTML = '<div style="color: #888;">暂无红包口令</div>';
+                return;
+            }
+            
+            container.innerHTML = redPackets.map(packet => `
+                <div class="red-packet-item ${packet.is_used ? 'used' : ''}">
+                    <div class="red-packet-info">
+                        <span class="red-packet-status">${packet.is_used ? '🔴' : '🟢'}</span>
+                        <div class="red-packet-details">
+                            <div class="red-packet-code">${escapeHtml(packet.code)}</div>
+                            <div class="red-packet-meta">
+                                ${packet.description ? escapeHtml(packet.description) : '无描述'} 
+                                ${packet.amount ? `· ¥${packet.amount}` : ''}
+                                ${packet.is_used ? `· 已被使用 (${packet.used_by_ip})` : '· 未使用'}
+                                · ${formatTime(packet.created_at)}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="red-packet-actions">
+                        <button class="delete-btn" onclick="deleteRedPacket(${packet.id})">
+                            🗑️ 删除
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 显示添加红包弹窗
+        function showAddRedPacketModal() {
+            document.getElementById('addRedPacketModal').classList.add('show');
+        }
+
+        // 关闭添加红包弹窗
+        function closeAddRedPacketModal() {
+            document.getElementById('addRedPacketModal').classList.remove('show');
+            document.getElementById('addRedPacketForm').reset();
+        }
+
+        // 添加红包口令
+        async function addRedPacket(event) {
+            event.preventDefault();
+            
+            const code = document.getElementById('redPacketCode').value.trim();
+            const description = document.getElementById('redPacketDescription').value.trim();
+            const amount = document.getElementById('redPacketAmount').value;
+            
+            if (!code) {
+                alert('请输入红包口令');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/red-packets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        description: description || null,
+                        amount: amount ? parseFloat(amount) : null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('红包口令添加成功！');
+                    closeAddRedPacketModal();
+                    loadRedPackets();
+                } else {
+                    alert('添加失败: ' + (result.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('添加红包失败:', error);
+                alert('添加失败，请检查网络连接');
+            }
+        }
+
+        // 删除红包口令
+        async function deleteRedPacket(packetId) {
+            if (!confirm('确定要删除这个红包口令吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/red-packets/${packetId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('红包口令删除成功！');
+                    loadRedPackets();
+                } else {
+                    const result = await response.json();
+                    alert('删除失败: ' + (result.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('删除红包失败:', error);
+                alert('删除失败，请检查网络连接');
+            }
+        }
+
+        // 显示留言列表
+        function displayMessages(messages) {
+            const container = document.getElementById('messagesContainer');
+            
+            if (!messages || messages.length === 0) {
+                container.innerHTML = '<div style="color: #888;">暂无留言数据</div>';
+                return;
+            }
+            
+            // 按时间倒序排列
+            const sortedMessages = messages.sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            container.innerHTML = sortedMessages.map((message, index) => `
+                <div class="message-item" data-message-id="${index}">
+                    <div class="message-header">
+                        <div class="message-info">
+                            <input type="checkbox" class="message-checkbox" onchange="updateDeleteButton()">
+                            <span class="message-emoji">${message.emoji || '🎂'}</span>
+                            <div class="message-meta">
+                                <div class="message-name">${escapeHtml(message.name || '匿名用户')}</div>
+                                <div class="message-time">${formatTime(message.timestamp)}</div>
+                            </div>
+                        </div>
+                        <div class="message-actions">
+                            <button class="delete-btn" onclick="deleteMessage(${index})">
+                                🗑️ 删除
+                            </button>
+                        </div>
+                    </div>
+                    <div class="message-content">${escapeHtml(message.message)}</div>
+                </div>
+            `).join('');
+        }
+
+        // 显示访问记录
+        function displayVisitors(visitors) {
+            const container = document.getElementById('visitorsContainer');
+            
+            if (!visitors || visitors.length === 0) {
+                container.innerHTML = '<div style="color: #888;">暂无访问记录</div>';
+                return;
+            }
+            
+            container.innerHTML = visitors.map(visitor => `
+                <div class="visitor-item">
+                    <div class="visitor-info">
+                        <span class="visitor-ip">${visitor.ip}</span>
+                        <span class="visitor-location" style="color: #96ceb4; font-size: 12px; background: rgba(150, 206, 180, 0.1); padding: 2px 6px; border-radius: 4px;">
+                            📍 ${visitor.location || '未知地区'}
+                        </span>
+                        <span class="visitor-agent" title="${escapeHtml(visitor.user_agent)}">
+                            ${getBrowserInfo(visitor.user_agent)}
+                        </span>
+                    </div>
+                    <span class="visitor-time">${formatTime(visitor.timestamp)}</span>
+                </div>
+            `).join('');
+        }
+
+        // 解析浏览器信息
+        function getBrowserInfo(userAgent) {
+            if (!userAgent) return '未知浏览器';
+            
+            if (userAgent.includes('Chrome')) return '🌐 Chrome';
+            if (userAgent.includes('Firefox')) return '🦊 Firefox';
+            if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) return '🧭 Safari';
+            if (userAgent.includes('Edge')) return '🔷 Edge';
+            if (userAgent.includes('Opera')) return '🎭 Opera';
+            if (userAgent.includes('Mobile')) return '📱 Mobile';
+            
+            return '🌐 其他浏览器';
+        }
+
+        // 格式化时间
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // HTML转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 全局变量存储留言数据
+        let allMessages = [];
+
+        // 删除单条留言
+        async function deleteMessage(index) {
+            if (!confirm('确定要删除这条留言吗？')) {
+                return;
+            }
+
+            const message = allMessages[index];
+            try {
+                const response = await fetch(`/api/messages/${index}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    // 从本地数组中移除
+                    allMessages.splice(index, 1);
+                    // 重新显示留言列表
+                    displayMessages(allMessages);
+                    // 更新统计数据
+                    updateStats();
+                    alert('留言删除成功！');
+                } else {
+                    const error = await response.json();
+                    alert('删除失败: ' + (error.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('删除留言失败:', error);
+                alert('删除失败，请检查网络连接');
+            }
+        }
+
+        // 切换全选状态
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('.message-checkbox');
+            const selectAllBtn = document.querySelector('.select-all-btn');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+            selectAllBtn.textContent = allChecked ? '☑️ 全选' : '☐ 取消全选';
+            updateDeleteButton();
+        }
+
+        // 更新删除按钮状态
+        function updateDeleteButton() {
+            const checkboxes = document.querySelectorAll('.message-checkbox');
+            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const deleteBtn = document.getElementById('deleteSelectedBtn');
+            deleteBtn.disabled = checkedCount === 0;
+            deleteBtn.textContent = checkedCount > 0 ? `🗑️ 删除选中 (${checkedCount})` : '🗑️ 删除选中';
+        }
+
+        // 删除选中的留言
+        async function deleteSelected() {
+            const checkboxes = document.querySelectorAll('.message-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert('请先选择要删除的留言');
+                return;
+            }
+            
+            if (!confirm(`确定要删除选中的 ${checkboxes.length} 条留言吗？`)) {
+                return;
+            }
+            
+            // 获取选中的索引（从大到小排序，避免删除时索引变化）
+            const indices = Array.from(checkboxes)
+                .map(cb => parseInt(cb.closest('.message-item').dataset.messageId))
+                .sort((a, b) => b - a);
+            
+            let successCount = 0;
+            let failCount = 0;
+            
+            for (const index of indices) {
+                try {
+                    const response = await fetch(`/api/messages/${index}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        successCount++;
+                        // 从本地数组中移除
+                        allMessages.splice(index, 1);
+                    } else {
+                        failCount++;
+                    }
+                } catch (error) {
+                    console.error('删除留言失败:', error);
+                    failCount++;
+                }
+            }
+            
+            // 重新显示留言列表
+            displayMessages(allMessages);
+            // 更新统计数据
+            updateStats();
+            
+            if (failCount === 0) {
+                alert(`成功删除 ${successCount} 条留言！`);
+            } else {
+                alert(`删除完成：成功 ${successCount} 条，失败 ${failCount} 条`);
+            }
+        }
+
+        // 更新统计数据
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/stats');
+                if (response.ok) {
+                    const statsData = await response.json();
+                    document.getElementById('totalMessages').textContent = statsData.totalMessages || 0;
+                    document.getElementById('todayMessages').textContent = statsData.todayMessages || 0;
+                }
+            } catch (error) {
+                console.error('更新统计数据失败:', error);
+            }
+        }
+
+        // 加载安全数据
+        async function loadSecurityData() {
+            try {
+                // 加载安全统计
+                const securityStatsResponse = await fetch('/api/security/stats');
+                if (securityStatsResponse.ok) {
+                    const securityStats = await securityStatsResponse.json();
+                    document.getElementById('activeBans').textContent = securityStats.active_bans || 0;
+                    document.getElementById('todayBans').textContent = securityStats.today_bans || 0;
+                    document.getElementById('todayRequests').textContent = securityStats.today_requests || 0;
+                    document.getElementById('todayBlocked').textContent = securityStats.today_blocked || 0;
+                }
+                
+                // 加载封禁IP列表
+                const bannedIpsResponse = await fetch('/api/security/banned-ips');
+                if (bannedIpsResponse.ok) {
+                    const bannedIps = await bannedIpsResponse.json();
+                    displayBannedIps(bannedIps);
+                } else {
+                    document.getElementById('bannedIpsContainer').innerHTML = '<div style="color: #ff6b6b;">加载封禁IP失败</div>';
+                }
+                
+                // 加载请求日志
+                const requestLogsResponse = await fetch('/api/security/request-logs?limit=20');
+                if (requestLogsResponse.ok) {
+                    const requestLogsData = await requestLogsResponse.json();
+                    displayRequestLogs(requestLogsData.logs || []);
+                } else {
+                    document.getElementById('requestLogsContainer').innerHTML = '<div style="color: #ff6b6b;">加载请求日志失败</div>';
+                }
+                
+            } catch (error) {
+                console.error('加载安全数据失败:', error);
+                document.getElementById('bannedIpsContainer').innerHTML = '<div style="color: #ff6b6b;">加载安全数据失败</div>';
+                document.getElementById('requestLogsContainer').innerHTML = '<div style="color: #ff6b6b;">加载安全数据失败</div>';
+            }
+        }
+
+        // 显示封禁IP列表
+        function displayBannedIps(bannedIps) {
+            const container = document.getElementById('bannedIpsContainer');
+            
+            if (!bannedIps || bannedIps.length === 0) {
+                container.innerHTML = '<div style="color: #888;">暂无被封禁的IP</div>';
+                return;
+            }
+            
+            container.innerHTML = bannedIps.map(ban => `
+                <div class="visitor-item" style="border-left: 3px solid #ff6b6b;">
+                    <div class="visitor-info">
+                        <span class="visitor-ip" style="background: rgba(255, 107, 107, 0.2); color: #ff6b6b;">${ban.ip_address}</span>
+                        <span style="color: #feca57; font-size: 12px; background: rgba(254, 202, 87, 0.1); padding: 2px 6px; border-radius: 4px;">
+                            ${ban.ban_reason}
+                        </span>
+                        <span style="color: #888; font-size: 11px;">
+                            封禁${ban.ban_count}次 · ${ban.is_permanent ? '永久' : ban.remaining_time}
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <span class="visitor-time">${formatTime(ban.banned_at)}</span>
+                        <button class="delete-btn" onclick="unbanIp('${ban.ip_address}')" style="padding: 4px 8px; font-size: 11px;">
+                            🔓 解封
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 显示请求日志
+        function displayRequestLogs(logs) {
+            const container = document.getElementById('requestLogsContainer');
+            
+            if (!logs || logs.length === 0) {
+                container.innerHTML = '<div style="color: #888;">暂无请求日志</div>';
+                return;
+            }
+            
+            container.innerHTML = logs.map(log => {
+                const statusColor = log.status_code >= 400 ? '#ff6b6b' : 
+                                  log.status_code >= 300 ? '#feca57' : '#4ecdc4';
+                return `
+                    <div class="visitor-item" style="font-size: 12px;">
+                        <div class="visitor-info">
+                            <span class="visitor-ip">${log.ip_address}</span>
+                            <span style="color: #96ceb4; background: rgba(150, 206, 180, 0.1); padding: 2px 6px; border-radius: 4px;">
+                                ${log.method} ${log.endpoint}
+                            </span>
+                            <span style="color: ${statusColor}; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 4px;">
+                                ${log.status_code}
+                            </span>
+                            ${log.response_time ? `<span style="color: #888; font-size: 10px;">${Math.round(log.response_time)}ms</span>` : ''}
+                        </div>
+                        <span class="visitor-time">${formatTime(log.created_at)}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 解封IP
+        async function unbanIp(ipAddress) {
+            if (!confirm(`确定要解封IP ${ipAddress} 吗？`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/security/banned-ips/${encodeURIComponent(ipAddress)}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('IP解封成功！');
+                    loadSecurityData();
+                } else {
+                    alert('解封失败: ' + (result.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('解封IP失败:', error);
+                alert('解封失败，请检查网络连接');
+            }
+        }
+
+        // 显示封禁IP弹窗
+        function showBanIpModal() {
+            document.getElementById('banIpModal').classList.add('show');
+        }
+
+        // 关闭封禁IP弹窗
+        function closeBanIpModal() {
+            document.getElementById('banIpModal').classList.remove('show');
+            document.getElementById('banIpForm').reset();
+        }
+
+        // 手动封禁IP
+        async function banIp(event) {
+            event.preventDefault();
+            
+            const ipAddress = document.getElementById('banIpAddress').value.trim();
+            const reason = document.getElementById('banReason').value.trim();
+            const duration = parseInt(document.getElementById('banDuration').value);
+            const isPermanent = document.getElementById('isPermanent').checked;
+            
+            if (!ipAddress) {
+                alert('请输入IP地址');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/security/banned-ips', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ip_address: ipAddress,
+                        reason: reason || '手动封禁',
+                        duration: duration,
+                        is_permanent: isPermanent
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('IP封禁成功！');
+                    closeBanIpModal();
+                    loadSecurityData();
+                } else {
+                    alert('封禁失败: ' + (result.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('封禁IP失败:', error);
+                alert('封禁失败，请检查网络连接');
+            }
+        }
+
+        // 事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            // 添加红包表单提交事件
+            document.getElementById('addRedPacketForm').addEventListener('submit', addRedPacket);
+            
+            // 添加封禁IP表单提交事件
+            document.getElementById('banIpForm').addEventListener('submit', banIp);
+            
+            // 点击模态框背景关闭
+            document.getElementById('addRedPacketModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeAddRedPacketModal();
+                }
+            });
+            
+            document.getElementById('banIpModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeBanIpModal();
+                }
+            });
+            
+            // 永久封禁复选框变化事件
+            document.getElementById('isPermanent').addEventListener('change', function() {
+                const durationInput = document.getElementById('banDuration');
+                durationInput.disabled = this.checked;
+                if (this.checked) {
+                    durationInput.style.opacity = '0.5';
+                } else {
+                    durationInput.style.opacity = '1';
+                }
+            });
+            
+            // 初始加载数据
+            loadData();
+        });
+
+        // 删除选中的留言
+        async function deleteSelected() {
+            const checkboxes = document.querySelectorAll('.message-checkbox:checked');
+            if (checkboxes.length === 0) return;
+
+            if (!confirm(`确定要删除选中的 ${checkboxes.length} 条留言吗？`)) {
+                return;
+            }
+
+            const indicesToDelete = Array.from(checkboxes).map(cb => {
+                return parseInt(cb.closest('.message-item').dataset.messageId);
+            }).sort((a, b) => b - a); // 从大到小排序，避免索引错乱
+
+            try {
+                let successCount = 0;
+                for (const index of indicesToDelete) {
+                    const response = await fetch(`/api/messages/${index}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        allMessages.splice(index, 1);
+                        successCount++;
+                    }
+                }
+
+                // 重新显示留言列表
+                displayMessages(allMessages);
+                updateStats();
+                alert(`成功删除 ${successCount} 条留言！`);
+            } catch (error) {
+                console.error('批量删除失败:', error);
+                alert('删除失败，请检查网络连接');
+            }
+        }
+
+        // 更新统计数据
+        function updateStats() {
+            document.getElementById('totalMessages').textContent = allMessages.length;
+            
+            const today = new Date().toDateString();
+            const todayMessages = allMessages.filter(msg => 
+                new Date(msg.timestamp).toDateString() === today
+            ).length;
+            document.getElementById('todayMessages').textContent = todayMessages;
+        }
+
+        // 绑定表单提交事件
+        document.getElementById('addRedPacketForm').addEventListener('submit', addRedPacket);
+        
+        // 点击弹窗外部关闭
+        document.getElementById('addRedPacketModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAddRedPacketModal();
+            }
+        });
+
+        // 页面加载时自动加载数据
+        document.addEventListener('DOMContentLoaded', loadData);
+        
+        // 每30秒自动刷新数据
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生日祝福</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=SF+Pro+Text:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 页面容器 -->
+    <div class="page-container">
+
+        <!-- 滚动容器 -->
+        <div class="scroll-container" id="scrollContainer">
+            <!-- 首页区域 -->
+            <section class="page-section active" id="section-0">
+                <div class="hero">
+                    <div class="hero-background">
+                        <div class="floating-elements">
+                            <div class="floating-element element-1"></div>
+                            <div class="floating-element element-2"></div>
+                            <div class="floating-element element-3"></div>
+                            <div class="floating-element element-4"></div>
+                            <div class="floating-element element-5"></div>
+                        </div>
+                    </div>
+                    <div class="hero-content">
+                        <div class="hero-badge animate-in">🎂 生日快乐 · Happy Birthday</div>
+                        <h1 class="hero-title animate-in" id="heroTitle">祝我生日快乐<br><span class="english-subtitle">Wishing Myself a Happy Birthday</span></h1>
+                        <p class="hero-subtitle animate-in" id="heroSubtitle">期待收到你们的温暖祝福<br><span class="english-text">Looking forward to your warm wishes</span></p>
+                        
+                        <!-- 年龄时间线 -->
+                        <div class="age-timeline animate-in" id="ageTimeline">
+                            <div class="timeline-container">
+                                <div class="timeline-track">
+                                    <div class="timeline-progress" id="timelineProgress"></div>
+                                    <div class="timeline-marker start">
+                                        <span class="age-number">23</span>
+                                        <span class="age-label">岁</span>
+                                    </div>
+                                    <div class="timeline-marker end">
+                                        <span class="age-number">24</span>
+                                        <span class="age-label">岁</span>
+                                    </div>
+                                </div>
+                                <div class="timeline-info">
+                                    <div class="progress-text" id="progressText">距离24岁还有...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 生日倒计时 -->
+                        <div class="countdown-container animate-in" id="countdownContainer">
+                            <div class="countdown-label" id="countdownLabel">距离生日还有 · Time Remaining</div>
+                            <div class="countdown-display" id="countdownDisplay">
+                                <div class="time-unit">
+                                    <span class="time-number" id="days">00</span>
+                                    <span class="time-label">天</span>
+                                </div>
+                                <div class="time-separator">:</div>
+                                <div class="time-unit">
+                                    <span class="time-number" id="hours">00</span>
+                                    <span class="time-label">小时</span>
+                                </div>
+                                <div class="time-separator">:</div>
+                                <div class="time-unit">
+                                    <span class="time-number" id="minutes">00</span>
+                                    <span class="time-label">分钟</span>
+                                </div>
+                                <div class="time-separator">:</div>
+                                <div class="time-unit">
+                                    <span class="time-number" id="seconds">00</span>
+                                    <span class="time-label">秒</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 生日特效 -->
+                        <div class="birthday-effects" id="birthdayEffects">
+                            <div class="confetti-container" id="confettiContainer"></div>
+                            <div class="balloons-container" id="balloonsContainer">
+                                <div class="balloon balloon-1">🎈</div>
+                                <div class="balloon balloon-2">🎈</div>
+                                <div class="balloon balloon-3">🎈</div>
+                                <div class="balloon balloon-4">🎈</div>
+                                <div class="balloon balloon-5">🎈</div>
+                            </div>
+                        </div>
+                        
+                        <div class="hero-actions animate-in">
+                            <button class="action-btn primary" onclick="openMessageModal()">
+                                <span>给我留言 · Leave a Message</span>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- 音乐盒组件 -->
+                        <div class="music-disc-corner" id="musicDiscCorner">
+                            <div class="music-disc-simple" id="musicDiscSimple">
+                                <div class="disc-center"></div>
+                                <div class="disc-lines"></div>
+                            </div>
+                            <audio id="backgroundMusic" preload="auto" loop>
+                                <source src="Matryoshka - Sacred Play Secret Place.mp3" type="audio/mpeg">
+                            </audio>
+                        </div>
+                        
+
+                        <!-- 弹幕容器 -->
+                        <div class="danmaku-container" id="danmakuContainer"></div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- 留言弹窗 -->
+    <div class="modal-overlay" id="messageModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 class="modal-title">给我留言 · Leave a Message</h2>
+            </div>
+            <div class="modal-content">
+                <div class="modal-intro">
+                    <div class="modal-emoji-center">
+                        <div class="modal-emoji" id="modalEmojiDisplay">🎂</div>
+                    </div>
+                    <p class="modal-description">分享你的生日祝福，让这个时刻更加特别<br><span class="english-text">Share your birthday wishes and make this moment special</span></p>
+                </div>
+                
+                <form id="modalMessageForm" class="message-form">
+                    <div class="form-group">
+                        <label for="modalMessage" class="form-label">你的生日祝福 · Your Birthday Wishes</label>
+                        <textarea id="modalMessage" name="message" class="form-textarea" placeholder="生日快乐！🎉 写下你的祝福..." required maxlength="500" rows="4"></textarea>
+                        <div class="char-count">
+                            <span id="charCount">0</span>/500
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">选择心情 · Choose Mood</label>
+                        <div class="emoji-grid" id="modalEmojiSelector">
+                            <div class="emoji-card active" data-emoji="🎂">
+                                <div class="emoji">🎂</div>
+                                <div class="emoji-name">生日</div>
+                            </div>
+                            <div class="emoji-card" data-emoji="🎉">
+                                <div class="emoji">🎉</div>
+                                <div class="emoji-name">庆祝</div>
+                            </div>
+                            <div class="emoji-card" data-emoji="🎈">
+                                <div class="emoji">🎈</div>
+                                <div class="emoji-name">快乐</div>
+                            </div>
+                            <div class="emoji-card" data-emoji="🎁">
+                                <div class="emoji">🎁</div>
+                                <div class="emoji-name">礼物</div>
+                            </div>
+                            <div class="emoji-card" data-emoji="✨">
+                                <div class="emoji">✨</div>
+                                <div class="emoji-name">闪耀</div>
+                            </div>
+                            <div class="emoji-card" data-emoji="💖">
+                                <div class="emoji">💖</div>
+                                <div class="emoji-name">爱心</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="modal-cancel-btn" onclick="closeMessageModal()">
+                            <span>取消</span>
+                        </button>
+                        <button type="submit" class="modal-submit-btn">
+                            <span>发送祝福</span>
+                            <div class="submit-icon">
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                    <path d="M16 1L1 8l4 2 2 6 3-4 6-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

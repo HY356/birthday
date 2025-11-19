@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>访问被限制 - 生日留言板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .ban-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ban-icon {
+            font-size: 80px;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .ban-title {
+            font-size: 28px;
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .ban-message {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .ban-details {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .ban-detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .ban-detail-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .ban-detail-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .ban-detail-value {
+            color: #666;
+        }
+
+        .contact-info {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #1976d2;
+        }
+
+        .retry-button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .retry-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .retry-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .countdown {
+            font-size: 18px;
+            color: #ff6b6b;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 480px) {
+            .ban-container {
+                padding: 30px 20px;
+            }
+            
+            .ban-icon {
+                font-size: 60px;
+            }
+            
+            .ban-title {
+                font-size: 24px;
+            }
+            
+            .ban-details {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ban-container">
+        <div class="ban-icon">🚫</div>
+        <h1 class="ban-title">访问被限制</h1>
+        <p class="ban-message">
+            很抱歉，您的IP地址已被暂时限制访问。这通常是由于频繁请求或违反了网站使用规则。
+        </p>
+        
+        <div class="ban-details">
+            <div class="ban-detail-item">
+                <span class="ban-detail-label">您的IP地址:</span>
+                <span class="ban-detail-value" id="user-ip">获取中...</span>
+            </div>
+            <div class="ban-detail-item">
+                <span class="ban-detail-label">封禁原因:</span>
+                <span class="ban-detail-value" id="ban-reason">系统安全保护</span>
+            </div>
+            <div class="ban-detail-item">
+                <span class="ban-detail-label">封禁时间:</span>
+                <span class="ban-detail-value" id="ban-time">刚刚</span>
+            </div>
+            <div class="ban-detail-item">
+                <span class="ban-detail-label">预计解封:</span>
+                <span class="ban-detail-value" id="unban-time">请稍后重试</span>
+            </div>
+        </div>
+
+        <div class="countdown" id="countdown" style="display: none;">
+            剩余时间: <span id="countdown-timer">--:--:--</span>
+        </div>
+
+        <div class="contact-info">
+            <strong>💡 如何解决？</strong><br>
+            • 请等待封禁时间结束后重试<br>
+            • 避免频繁刷新页面或发送请求<br>
+            • 如有疑问，请联系网站管理员
+        </div>
+
+        <button class="retry-button" onclick="location.reload()" id="retry-btn">
+            重新尝试访问
+        </button>
+    </div>
+
+    <script>
+        // 获取用户IP地址
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('user-ip').textContent = data.ip;
+            })
+            .catch(() => {
+                document.getElementById('user-ip').textContent = '无法获取';
+            });
+
+        // 从URL参数获取封禁信息
+        const urlParams = new URLSearchParams(window.location.search);
+        const reason = urlParams.get('reason');
+        const banTime = urlParams.get('ban_time');
+        const unbanTime = urlParams.get('unban_time');
+        const remainingSeconds = urlParams.get('remaining');
+
+        if (reason) {
+            document.getElementById('ban-reason').textContent = reason;
+        }
+
+        if (banTime) {
+            const banDate = new Date(banTime);
+            document.getElementById('ban-time').textContent = banDate.toLocaleString('zh-CN');
+        }
+
+        if (unbanTime) {
+            const unbanDate = new Date(unbanTime);
+            document.getElementById('unban-time').textContent = unbanDate.toLocaleString('zh-CN');
+        }
+
+        // 倒计时功能
+        if (remainingSeconds && !isNaN(remainingSeconds) && remainingSeconds > 0) {
+            let remaining = parseInt(remainingSeconds);
+            const countdownElement = document.getElementById('countdown');
+            const timerElement = document.getElementById('countdown-timer');
+            const retryButton = document.getElementById('retry-btn');
+            
+            countdownElement.style.display = 'block';
+            retryButton.disabled = true;
+            retryButton.textContent = '请等待解封...';
+
+            const updateCountdown = () => {
+                if (remaining <= 0) {
+                    countdownElement.style.display = 'none';
+                    retryButton.disabled = false;
+                    retryButton.textContent = '重新尝试访问';
+                    return;
+                }
+
+                const hours = Math.floor(remaining / 3600);
+                const minutes = Math.floor((remaining % 3600) / 60);
+                const seconds = remaining % 60;
+
+                timerElement.textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                remaining--;
+            };
+
+            updateCountdown();
+            const interval = setInterval(() => {
+                updateCountdown();
+                if (remaining < 0) {
+                    clearInterval(interval);
+                }
+            }, 1000);
+        }
+
+        // 页面标题闪烁效果
+        let titleFlash = false;
+        setInterval(() => {
+            document.title = titleFlash ? '⚠️ 访问被限制' : '🚫 访问被限制';
+            titleFlash = !titleFlash;
+        }, 2000);
+    </script>
+</body>
+</html>
